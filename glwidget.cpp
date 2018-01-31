@@ -60,7 +60,7 @@ RenderObject::RenderObject(GLWidget *glWidget, QObject *parent)
     : QObject(parent)
     , glInstance(glWidget)
 {
-
+    qApp->setAttribute(Qt::AA_DontCheckOpenGLContextThreadAffinity);
 }
 
 RenderObject::~RenderObject()
@@ -83,7 +83,7 @@ void RenderObject::onTimer()
     {
         qFatal("Threading problems!");
     }
-    //glInstance->renderThis();
+
     glInstance->m_xRot += 10;
     glInstance->paintGL();
 }
@@ -247,11 +247,6 @@ static const char *fragmentShaderSource =
 
 void GLWidget::initializeGL()
 {
-//    if(m_initialized)
-//    {
-//        return;
-//    }
-
     // In this example the widget's corresponding top-level window can change
     // several times during the widget's lifetime. Whenever this happens, the
     // QOpenGLWidget's associated context is destroyed and a new one is created.
@@ -306,12 +301,8 @@ void GLWidget::initializeGL()
     m_initialized = true;
 
     QOpenGLContext *context = this->context();
-    if(context != nullptr/* && !m_thread.isRunning()*/)
+    if(context != nullptr)
     {
-        //doneCurrent();
-        qApp->setAttribute(Qt::AA_DontCheckOpenGLContextThreadAffinity);
-        //context->moveToThread(&m_thread);
-
         if(!m_thread.isRunning())
         {
             m_renderObject.moveToThread(&m_thread);
@@ -321,7 +312,6 @@ void GLWidget::initializeGL()
             m_timer.start(20);
         }
     }
-    //
 }
 
 void GLWidget::setupVertexAttribs()
@@ -340,11 +330,6 @@ void GLWidget::paintGL()
     QMutexLocker mlocker(&m_mutex);
     this->makeCurrent();
 
-//    if(this->context()->thread() != &m_thread)
-//    {
-//        qFatal("Threading problems");
-//    }
-
     if(QThread::currentThread() != &m_thread)
     {
         qFatal("Threading problems");
@@ -354,9 +339,6 @@ void GLWidget::paintGL()
 
     int w = this->size().width();
     int h = this->size().height();
-    //resizeGL(w, h);
-
-    //f->glViewport(0, 0, q->width() * q->devicePixelRatioF(), q->height() * q->devicePixelRatioF());
     this->glViewport(0, 0, w * context()->screen()->devicePixelRatio(), h * context()->screen()->devicePixelRatio());
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -411,54 +393,31 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::paintEvent(QPaintEvent *)
 {
-    //QOpenGLWidget::paintEvent(e);
-    //QWidget::paintEvent(e);
-    //paintGL();
+
 }
 
 void GLWidget::resizeEvent(QResizeEvent *e)
 {
-//    QMutexLocker mlocker(&m_mutex);
-//    QOpenGLWidget::resizeEvent(e);
-//    QWidget::resizeEvent(e);
-//    emit signalResize(e->oldSize());
-
-//    if(!m_thread.isRunning())
-//    {
-//        QOpenGLWidget::resizeEvent(e);
-//    }
-//    else{
-        //QWidget::resizeEvent(e);
-        QOpenGLContext *context = this->context();
-        if(context != nullptr && context->isValid())
-        {
-            emit m_renderObject.signalResize(e->oldSize());
-            //m_timer.stop();
-        }
-        else
-        {
-            QOpenGLWidget::resizeEvent(e);
-        }
-//    }
-
-    //test
-//    int w = this->size().width();
-//    int h = this->size().height();
-//    resizeGL(w, h);
-    //
+    QOpenGLContext *context = this->context();
+    if(context != nullptr && context->isValid())
+    {
+        emit m_renderObject.signalResize(e->oldSize());
+    }
+    else
+    {
+        QOpenGLWidget::resizeEvent(e);
+    }
 }
 
 void GLWidget::renderThis()
 {
     makeCurrent();
-    //QOpenGLWidget::paintEvent(nullptr);
     paintGL();
     doneCurrent();
 }
 
 void GLWidget::onResize(QSize oldSize)
 {
-    //makeCurrent();
     QSize sz = size();
     QResizeEvent e(sz, oldSize);
 
@@ -468,24 +427,9 @@ void GLWidget::onResize(QSize oldSize)
     }
 
     QOpenGLWidget::resizeEvent(&e);
-    //update();
-    //doneCurrent();
-    //m_timer.start();
 }
 
 void GLWidget::showEvent(QShowEvent *)
 {
-//    if(!m_thread.isRunning())
-//    {
-//        glInstance = this;
-//        qApp->setAttribute(Qt::AA_DontCheckOpenGLContextThreadAffinity);
-////        QOpenGLContext *context = this->context();
-////        doneCurrent();
-////        context->moveToThread(&m_thread);
-//        m_renderObject.moveToThread(&m_thread);
-//        connect(&m_timer, &QTimer::timeout, &m_renderObject, &RenderObject::onTimer);
-//        connect(this, &GLWidget::signalResize, &m_renderObject, &RenderObject::onResize);
-//        m_thread.start();
-//        m_timer.start(20);
-//    }
+
 }
