@@ -398,8 +398,7 @@ void GLWidget::paintEvent(QPaintEvent *)
 
 void GLWidget::resizeEvent(QResizeEvent *e)
 {
-    QOpenGLContext *context = this->context();
-    if(context != nullptr && context->isValid())
+    if(e->oldSize().isValid())
     {
         emit m_renderObject.signalResize(e->oldSize());
     }
@@ -426,7 +425,11 @@ void GLWidget::onResize(QSize oldSize)
         qFatal("Resize problems!");
     }
 
-    QOpenGLWidget::resizeEvent(&e);
+    //QOpenGLContext *context = this->context();
+    if(!oldSize.isEmpty())
+    {
+        QOpenGLWidget::resizeEvent(&e);
+    }
 }
 
 void GLWidget::showEvent(QShowEvent *)
